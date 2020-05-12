@@ -21,12 +21,12 @@ dir_path = (os.path.abspath(os.path.join(os.path.realpath(__file__), './.')))
 sys.path.append(dir_path)
 
 
-def parse_args():
+def parse_args(gpu_id):
     parser = argparse.ArgumentParser(description='Train a AttnGAN network')
     parser.add_argument('--cfg', dest='cfg_file',
                         help='optional config file',
-                        default='cfg/bird_attn2.yml', type=str)
-    parser.add_argument('--gpu', dest='gpu_id', type=int, default=-1)
+                        default='cfg/eval_coco.yml', type=str)
+    parser.add_argument('--gpu', dest='gpu_id', type=int, default=gpu_id)
     parser.add_argument('--data_dir', dest='data_dir', type=str, default='')
     parser.add_argument('--manualSeed', type=int, help='manual seed')
     args = parser.parse_args()
@@ -74,8 +74,8 @@ def gen_example(wordtoix, algo, sentences):
     algo.gen_example(data_dic)
 
 
-def main_sampler(sentences):
-    args = parse_args()
+def main_sampler(sentences, gpu_id):
+    args = parse_args(gpu_id)
     if args.cfg_file is not None:
         cfg_from_file(args.cfg_file)
 
@@ -127,13 +127,6 @@ def main_sampler(sentences):
     algo = trainer(output_dir, dataloader, dataset.n_words, dataset.ixtoword)
 
     start_t = time.time()
-    if cfg.TRAIN.FLAG:
-        algo.train()
-    else:
-        '''generate images from pre-extracted embeddings'''
-        if cfg.B_VALIDATION:
-            algo.sampling(split_dir)  # generate images for the whole valid dataset
-        else:
-            gen_example(dataset.wordtoix, algo, sentences)  # generate images for customized captions
+    gen_example(dataset.wordtoix, algo, sentences)  # generate images for customized captions
     end_t = time.time()
-    print('Total time for training:', end_t - start_t)
+    print('Total time for generation:', end_t - start_t)
