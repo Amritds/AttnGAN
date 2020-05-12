@@ -1,6 +1,6 @@
 import numpy as np
 from PIL import Image
-from main_sampler import main_sampler
+from AttnGAN.code.main_sampler import main_sampler
 
 sentences = ['A man standing in a field',
              'A girl standing in the ocean']

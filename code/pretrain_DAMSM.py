@@ -1,14 +1,14 @@
 from __future__ import print_function
 
-from miscc.utils import mkdir_p
-from miscc.utils import build_super_images
-from miscc.losses import sent_loss, words_loss
-from miscc.config import cfg, cfg_from_file
+from AttnGAN.code.miscc.utils import mkdir_p
+from AttnGAN.code.miscc.utils import build_super_images
+from AttnGAN.code.miscc.losses import sent_loss, words_loss
+from AttnGAN.code.miscc.config import cfg, cfg_from_file
 
-from datasets import TextDataset
-from datasets import prepare_data
+from AttnGAN.code.datasets import TextDataset
+from AttnGAN.code.datasets import prepare_data
 
-from model import RNN_ENCODER, CNN_ENCODER
+from AttnGAN.code.model import RNN_ENCODER, CNN_ENCODER
 
 import os
 import sys

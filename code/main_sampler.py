@@ -1,7 +1,7 @@
 from __future__ import print_function
-from trainer import condGANTrainer as trainer
-from miscc.config import cfg, cfg_from_file
-from datasets import TextDataset
+from AttnGAN.code.trainer import condGANTrainer as trainer
+from AttnGAN.code.miscc.config import cfg, cfg_from_file
+from AttnGAN.code.datasets import TextDataset
 
 import os
 import sys
