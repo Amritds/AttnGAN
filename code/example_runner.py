@@ -4,7 +4,7 @@ from main_sampler import main_sampler
 
 sentences = ['A man standing in a field',
              'A girl standing in the ocean']
-
+print('\n\nGenerating Images now\n\n')
 generated_images = main_sampler(sentences)
 
 for i in range(len(generated_images)):
