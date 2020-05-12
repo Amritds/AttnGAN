@@ -486,8 +486,6 @@ class condGANTrainer(object):
             cap_lens_np = cap_lens.cpu().data.numpy()
             generated_images = []
             for j in range(batch_size):
-                save_name = '%s/%d_s_%d' % (save_dir, i, sorted_indices[j])
-                
                 im = fake_imgs[2][j].data.cpu().numpy()
                 im = (im + 1.0) * 127.5
                 im = im.astype(np.uint8)
