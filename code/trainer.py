@@ -56,7 +56,7 @@ class condGANTrainer(object):
             torch.load(cfg.TRAIN.NET_E, map_location=lambda storage, loc: storage)
         self.text_encoder.load_state_dict(state_dict)
         print('Load text encoder from:', cfg.TRAIN.NET_E)
-        self.text_encoder = text_encoder.cuda()
+        self.text_encoder = self.text_encoder.cuda()
         self.text_encoder.eval()
 
         # the path to save generated images
