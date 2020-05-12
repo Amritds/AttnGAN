@@ -71,6 +71,7 @@ def gen_example(wordtoix, algo, sentences):
     data_dic = [cap_array, cap_lens, sorted_indices]
     return algo.gen_example(data_dic)
 
+gpu_id = 0
 args = parse_args(gpu_id)
 if args.cfg_file is not None:
     cfg_from_file(args.cfg_file)
@@ -122,7 +123,7 @@ dataloader = torch.utils.data.DataLoader(
 algo = trainer(output_dir, dataloader, dataset.n_words, dataset.ixtoword)
 
 
-def main_sampler(sentences, gpu_id):
+def main_sampler(sentences):
     return gen_example(dataset.wordtoix, algo, sentences)  # generate images for customized captions
    
 
