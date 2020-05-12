@@ -59,7 +59,7 @@ def gen_example(wordtoix, algo, sentences):
     return algo.gen_example(data_dic)
 
 gpu_id = 0
-args = {'cfg_file':'cfg/eval_coco.yml',
+args = {'cfg_file':'AttnGAN/code/cfg/eval_coco.yml',
         'gpu_id':gpu_id,
         'data_dir':'',
         'manualSeed':None}
@@ -89,7 +89,7 @@ if cfg.CUDA:
     torch.cuda.manual_seed_all(args['manualSeed'])
 now = datetime.datetime.now(dateutil.tz.tzlocal())
 timestamp = now.strftime('%Y_%m_%d_%H_%M_%S')
-output_dir = '../output/%s_%s_%s' % \
+output_dir = 'AttnGAN/output/%s_%s_%s' % \
     (cfg.DATASET_NAME, cfg.CONFIG_NAME, timestamp)
 
 split_dir, bshuffle = 'train', True
