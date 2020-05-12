@@ -498,20 +498,3 @@ class condGANTrainer(object):
                             im = Image.fromarray(im)
                             fullpath = '%s_g%d.png' % (save_name, k)
                             im.save(fullpath)
-
-                        for k in range(len(attention_maps)):
-                            if len(fake_imgs) > 1:
-                                im = fake_imgs[k + 1].detach().cpu()
-                            else:
-                                im = fake_imgs[0].detach().cpu()
-                            attn_maps = attention_maps[k]
-                            att_sze = attn_maps.size(2)
-                            img_set, sentences = \
-                                build_super_images2(im[j].unsqueeze(0),
-                                                    captions[j].unsqueeze(0),
-                                                    [cap_lens_np[j]], self.ixtoword,
-                                                    [attn_maps[j]], att_sze)
-                            if img_set is not None:
-                                im = Image.fromarray(img_set)
-                                fullpath = '%s_a%d.png' % (save_name, k)
-                                im.save(fullpath)
