@@ -73,7 +73,7 @@ if args['gpu_id'] != -1:
 else:
     cfg.CUDA = False
 
-if args.data_dir != '':
+if args['data_dir'] != '':
     cfg.DATA_DIR = args['data_dir']
 print('Using config:')
 pprint.pprint(cfg)
