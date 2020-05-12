@@ -36,7 +36,6 @@ def parse_args(gpu_id):
 def gen_example(wordtoix, algo, sentences):
     '''generate images from example sentences'''
     from nltk.tokenize import RegexpTokenizer
-    name='example_captions'
     data_dic = {}
     # a list of indices for a sentence
     captions = []
@@ -69,9 +68,8 @@ def gen_example(wordtoix, algo, sentences):
         cap = captions[idx]
         c_len = len(cap)
         cap_array[i, :c_len] = cap
-    key = name[(name.rfind('/') + 1):]
-    data_dic[key] = [cap_array, cap_lens, sorted_indices]
-    algo.gen_example(data_dic)
+    data_dic = [cap_array, cap_lens, sorted_indices]
+    return algo.gen_example(data_dic)
 
 
 def main_sampler(sentences, gpu_id):
@@ -126,7 +124,6 @@ def main_sampler(sentences, gpu_id):
     # Define models and go to train/evaluate
     algo = trainer(output_dir, dataloader, dataset.n_words, dataset.ixtoword)
 
-    start_t = time.time()
-    gen_example(dataset.wordtoix, algo, sentences)  # generate images for customized captions
-    end_t = time.time()
-    print('Total time for generation:', end_t - start_t)
+    return gen_example(dataset.wordtoix, algo, sentences)  # generate images for customized captions
+   
+

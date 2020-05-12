@@ -456,45 +456,47 @@ class condGANTrainer(object):
             print('Load G from: ', model_dir)
             netG.cuda()
             netG.eval()
-            for key in data_dic:
-                save_dir = '%s/%s' % (s_tmp, key)
-                mkdir_p(save_dir)
-                captions, cap_lens, sorted_indices = data_dic[key]
+            
+            captions, cap_lens, sorted_indices = data_dic
 
-                batch_size = captions.shape[0]
-                nz = cfg.GAN.Z_DIM
-                captions = Variable(torch.from_numpy(captions), volatile=True)
-                cap_lens = Variable(torch.from_numpy(cap_lens), volatile=True)
+            batch_size = captions.shape[0]
+            nz = cfg.GAN.Z_DIM
+            captions = Variable(torch.from_numpy(captions), volatile=True)
+            cap_lens = Variable(torch.from_numpy(cap_lens), volatile=True)
 
-                captions = captions.cuda()
-                cap_lens = cap_lens.cuda()
-                for i in range(1):  # 16
-                    noise = Variable(torch.FloatTensor(batch_size, nz), volatile=True)
-                    noise = noise.cuda()
-                    #######################################################
-                    # (1) Extract text embeddings
-                    ######################################################
-                    hidden = text_encoder.init_hidden(batch_size)
-                    # words_embs: batch_size x nef x seq_len
-                    # sent_emb: batch_size x nef
-                    words_embs, sent_emb = text_encoder(captions, cap_lens, hidden)
-                    mask = (captions == 0)
-                    #######################################################
-                    # (2) Generate fake images
-                    ######################################################
-                    noise.data.normal_(0, 1)
-                    fake_imgs, attention_maps, _, _ = netG(noise, sent_emb, words_embs, mask)
-                    # G attention
-                    cap_lens_np = cap_lens.cpu().data.numpy()
-                    for j in range(batch_size):
-                        save_name = '%s/%d_s_%d' % (save_dir, i, sorted_indices[j])
-                        
-                        im = fake_imgs[2][j].data.cpu().numpy()
-                        im = (im + 1.0) * 127.5
-                        im = im.astype(np.uint8)
-                        # print('im', im.shape)
-                        im = np.transpose(im, (1, 2, 0))
-                        # print('im', im.shape)
-                        im = Image.fromarray(im)
-                        fullpath = '%s.png' % (save_name)
-                        im.save(fullpath)
+            captions = captions.cuda()
+            cap_lens = cap_lens.cuda()
+            
+            noise = Variable(torch.FloatTensor(batch_size, nz), volatile=True)
+            noise = noise.cuda()
+            #######################################################
+            # (1) Extract text embeddings
+            ######################################################
+            hidden = text_encoder.init_hidden(batch_size)
+            # words_embs: batch_size x nef x seq_len
+            # sent_emb: batch_size x nef
+            words_embs, sent_emb = text_encoder(captions, cap_lens, hidden)
+            mask = (captions == 0)
+            #######################################################
+            # (2) Generate fake images
+            ######################################################
+            noise.data.normal_(0, 1)
+            fake_imgs, attention_maps, _, _ = netG(noise, sent_emb, words_embs, mask)
+            # G attention
+            cap_lens_np = cap_lens.cpu().data.numpy()
+            generated_images = []
+            for j in range(batch_size):
+                save_name = '%s/%d_s_%d' % (save_dir, i, sorted_indices[j])
+                
+                im = fake_imgs[2][j].data.cpu().numpy()
+                im = (im + 1.0) * 127.5
+                im = im.astype(np.uint8)
+                # print('im', im.shape)
+                im = np.transpose(im, (1, 2, 0))
+                # print('im', im.shape)
+                #im = Image.fromarray(im)
+                #fullpath = '%s.png' % (save_name)
+                #im.save(fullpath)
+                generated_images.append(im)
+            
+            return np.array(generated_images)   
