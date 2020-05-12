@@ -71,59 +71,58 @@ def gen_example(wordtoix, algo, sentences):
     data_dic = [cap_array, cap_lens, sorted_indices]
     return algo.gen_example(data_dic)
 
+args = parse_args(gpu_id)
+if args.cfg_file is not None:
+    cfg_from_file(args.cfg_file)
+
+if args.gpu_id != -1:
+    cfg.GPU_ID = args.gpu_id
+else:
+    cfg.CUDA = False
+
+if args.data_dir != '':
+    cfg.DATA_DIR = args.data_dir
+print('Using config:')
+pprint.pprint(cfg)
+
+if not cfg.TRAIN.FLAG:
+    args.manualSeed = 100
+elif args.manualSeed is None:
+    args.manualSeed = random.randint(1, 10000)
+random.seed(args.manualSeed)
+np.random.seed(args.manualSeed)
+torch.manual_seed(args.manualSeed)
+if cfg.CUDA:
+    torch.cuda.manual_seed_all(args.manualSeed)
+now = datetime.datetime.now(dateutil.tz.tzlocal())
+timestamp = now.strftime('%Y_%m_%d_%H_%M_%S')
+output_dir = '../output/%s_%s_%s' % \
+    (cfg.DATASET_NAME, cfg.CONFIG_NAME, timestamp)
+
+split_dir, bshuffle = 'train', True
+if not cfg.TRAIN.FLAG:
+    # bshuffle = False
+    split_dir = 'test'
+
+# Get data loader
+imsize = cfg.TREE.BASE_SIZE * (2 ** (cfg.TREE.BRANCH_NUM - 1))
+image_transform = transforms.Compose([
+    transforms.Scale(int(imsize * 76 / 64)),
+    transforms.RandomCrop(imsize),
+    transforms.RandomHorizontalFlip()])
+dataset = TextDataset(cfg.DATA_DIR, split_dir,
+                      base_size=cfg.TREE.BASE_SIZE,
+                      transform=image_transform)
+assert dataset
+dataloader = torch.utils.data.DataLoader(
+    dataset, batch_size=cfg.TRAIN.BATCH_SIZE,
+    drop_last=True, shuffle=bshuffle, num_workers=int(cfg.WORKERS))
+
+# Define models and go to train/evaluate
+algo = trainer(output_dir, dataloader, dataset.n_words, dataset.ixtoword)
+
 
 def main_sampler(sentences, gpu_id):
-    args = parse_args(gpu_id)
-    if args.cfg_file is not None:
-        cfg_from_file(args.cfg_file)
-
-    if args.gpu_id != -1:
-        cfg.GPU_ID = args.gpu_id
-    else:
-        cfg.CUDA = False
-
-    if args.data_dir != '':
-        cfg.DATA_DIR = args.data_dir
-    print('Using config:')
-    pprint.pprint(cfg)
-
-    if not cfg.TRAIN.FLAG:
-        args.manualSeed = 100
-    elif args.manualSeed is None:
-        args.manualSeed = random.randint(1, 10000)
-    random.seed(args.manualSeed)
-    np.random.seed(args.manualSeed)
-    torch.manual_seed(args.manualSeed)
-    if cfg.CUDA:
-        torch.cuda.manual_seed_all(args.manualSeed)
-
-    now = datetime.datetime.now(dateutil.tz.tzlocal())
-    timestamp = now.strftime('%Y_%m_%d_%H_%M_%S')
-    output_dir = '../output/%s_%s_%s' % \
-        (cfg.DATASET_NAME, cfg.CONFIG_NAME, timestamp)
-
-    split_dir, bshuffle = 'train', True
-    if not cfg.TRAIN.FLAG:
-        # bshuffle = False
-        split_dir = 'test'
-
-    # Get data loader
-    imsize = cfg.TREE.BASE_SIZE * (2 ** (cfg.TREE.BRANCH_NUM - 1))
-    image_transform = transforms.Compose([
-        transforms.Scale(int(imsize * 76 / 64)),
-        transforms.RandomCrop(imsize),
-        transforms.RandomHorizontalFlip()])
-    dataset = TextDataset(cfg.DATA_DIR, split_dir,
-                          base_size=cfg.TREE.BASE_SIZE,
-                          transform=image_transform)
-    assert dataset
-    dataloader = torch.utils.data.DataLoader(
-        dataset, batch_size=cfg.TRAIN.BATCH_SIZE,
-        drop_last=True, shuffle=bshuffle, num_workers=int(cfg.WORKERS))
-
-    # Define models and go to train/evaluate
-    algo = trainer(output_dir, dataloader, dataset.n_words, dataset.ixtoword)
-
     return gen_example(dataset.wordtoix, algo, sentences)  # generate images for customized captions
    
 
