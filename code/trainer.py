@@ -500,4 +500,4 @@ class condGANTrainer(object):
             #im.save(fullpath)
             generated_images.append(im)
            
-            return np.array(generated_images)   
+        return np.array(generated_images)   
