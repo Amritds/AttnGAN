@@ -58,9 +58,8 @@ def gen_example(wordtoix, algo, sentences):
     data_dic = [cap_array, cap_lens, sorted_indices]
     return algo.gen_example(data_dic)
 
-gpu_id = 0
 args = {'cfg_file':'AttnGAN/code/cfg/eval_coco.yml',
-        'gpu_id':gpu_id,
+        'gpu_id':os.environ["CUDA_VISIBLE_DEVICES"],
         'data_dir':'',
         'manualSeed':None}
 
