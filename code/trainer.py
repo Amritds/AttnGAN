@@ -24,6 +24,9 @@ import time
 import numpy as np
 import sys
 
+
+
+
 # ################# Text to image task############################ #
 class condGANTrainer(object):
     def __init__(self, output_dir, data_loader, n_words, ixtoword):
@@ -44,6 +47,32 @@ class condGANTrainer(object):
         self.ixtoword = ixtoword
         self.data_loader = data_loader
         self.num_batches = len(self.data_loader)
+        
+        
+        # Build and load the generator
+        self.text_encoder = \
+            RNN_ENCODER(self.n_words, nhidden=cfg.TEXT.EMBEDDING_DIM)
+        state_dict = \
+            torch.load(cfg.TRAIN.NET_E, map_location=lambda storage, loc: storage)
+        self.text_encoder.load_state_dict(state_dict)
+        print('Load text encoder from:', cfg.TRAIN.NET_E)
+        self.text_encoder = text_encoder.cuda()
+        self.text_encoder.eval()
+
+        # the path to save generated images
+        if cfg.GAN.B_DCGAN:
+            self.netG = G_DCGAN()
+        else:
+            self.netG = G_NET()
+        s_tmp = cfg.TRAIN.NET_G[:cfg.TRAIN.NET_G.rfind('.pth')]
+        model_dir = cfg.TRAIN.NET_G
+        state_dict = \
+            torch.load(model_dir, map_location=lambda storage, loc: storage)
+        self.netG.load_state_dict(state_dict)
+        print('Load G from: ', model_dir)
+        self.netG.cuda()
+        self.netG.eval()                        
+               
 
     def build_models(self):
         # ###################encoders######################################## #
@@ -428,73 +457,47 @@ class condGANTrainer(object):
                         im = Image.fromarray(im)
                         fullpath = '%s_s%d.png' % (s_tmp, k)
                         im.save(fullpath)
-
+      
+                        
     def gen_example(self, data_dic):
-        if cfg.TRAIN.NET_G == '':
-            print('Error: the path for morels is not found!')
-        else:
-            # Build and load the generator
-            text_encoder = \
-                RNN_ENCODER(self.n_words, nhidden=cfg.TEXT.EMBEDDING_DIM)
-            state_dict = \
-                torch.load(cfg.TRAIN.NET_E, map_location=lambda storage, loc: storage)
-            text_encoder.load_state_dict(state_dict)
-            print('Load text encoder from:', cfg.TRAIN.NET_E)
-            text_encoder = text_encoder.cuda()
-            text_encoder.eval()
+        captions, cap_lens, sorted_indices = data_dic
 
-            # the path to save generated images
-            if cfg.GAN.B_DCGAN:
-                netG = G_DCGAN()
-            else:
-                netG = G_NET()
-            s_tmp = cfg.TRAIN.NET_G[:cfg.TRAIN.NET_G.rfind('.pth')]
-            model_dir = cfg.TRAIN.NET_G
-            state_dict = \
-                torch.load(model_dir, map_location=lambda storage, loc: storage)
-            netG.load_state_dict(state_dict)
-            print('Load G from: ', model_dir)
-            netG.cuda()
-            netG.eval()
-            
-            captions, cap_lens, sorted_indices = data_dic
+        batch_size = captions.shape[0]
+        nz = cfg.GAN.Z_DIM
+        captions = Variable(torch.from_numpy(captions), volatile=True)
+        cap_lens = Variable(torch.from_numpy(cap_lens), volatile=True)
 
-            batch_size = captions.shape[0]
-            nz = cfg.GAN.Z_DIM
-            captions = Variable(torch.from_numpy(captions), volatile=True)
-            cap_lens = Variable(torch.from_numpy(cap_lens), volatile=True)
-
-            captions = captions.cuda()
-            cap_lens = cap_lens.cuda()
-            
-            noise = Variable(torch.FloatTensor(batch_size, nz), volatile=True)
-            noise = noise.cuda()
-            #######################################################
-            # (1) Extract text embeddings
-            ######################################################
-            hidden = text_encoder.init_hidden(batch_size)
-            # words_embs: batch_size x nef x seq_len
-            # sent_emb: batch_size x nef
-            words_embs, sent_emb = text_encoder(captions, cap_lens, hidden)
-            mask = (captions == 0)
-            #######################################################
-            # (2) Generate fake images
-            ######################################################
-            noise.data.normal_(0, 1)
-            fake_imgs, attention_maps, _, _ = netG(noise, sent_emb, words_embs, mask)
-            # G attention
-            cap_lens_np = cap_lens.cpu().data.numpy()
-            generated_images = []
-            for j in range(batch_size):
-                im = fake_imgs[2][j].data.cpu().numpy()
-                im = (im + 1.0) * 127.5
-                im = im.astype(np.uint8)
-                # print('im', im.shape)
-                im = np.transpose(im, (1, 2, 0))
-                # print('im', im.shape)
-                #im = Image.fromarray(im)
-                #fullpath = '%s.png' % (save_name)
-                #im.save(fullpath)
-                generated_images.append(im)
-            
+        captions = captions.cuda()
+        cap_lens = cap_lens.cuda()
+           
+        noise = Variable(torch.FloatTensor(batch_size, nz), volatile=True)
+        noise = noise.cuda()
+        #######################################################
+        # (1) Extract text embeddings
+        ######################################################
+        hidden = self.text_encoder.init_hidden(batch_size)
+        # words_embs: batch_size x nef x seq_len
+        # sent_emb: batch_size x nef
+        words_embs, sent_emb = self.text_encoder(captions, cap_lens, hidden)
+        mask = (captions == 0)
+        #######################################################
+        # (2) Generate fake images
+        ######################################################
+        noise.data.normal_(0, 1)
+        fake_imgs, attention_maps, _, _ = self.netG(noise, sent_emb, words_embs, mask)
+        # G attention
+        cap_lens_np = cap_lens.cpu().data.numpy()
+        generated_images = []
+        for j in range(batch_size):
+            im = fake_imgs[2][j].data.cpu().numpy()
+            im = (im + 1.0) * 127.5
+            im = im.astype(np.uint8)
+            # print('im', im.shape)
+            im = np.transpose(im, (1, 2, 0))
+            # print('im', im.shape)
+            #im = Image.fromarray(im)
+            #fullpath = '%s.png' % (save_name)
+            #im.save(fullpath)
+            generated_images.append(im)
+           
             return np.array(generated_images)   

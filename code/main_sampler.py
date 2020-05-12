@@ -1,8 +1,7 @@
 from __future__ import print_function
-
+from trainer import condGANTrainer as trainer
 from miscc.config import cfg, cfg_from_file
 from datasets import TextDataset
-from trainer import condGANTrainer as trainer
 
 import os
 import sys
@@ -121,7 +120,6 @@ dataloader = torch.utils.data.DataLoader(
 
 # Define models and go to train/evaluate
 algo = trainer(output_dir, dataloader, dataset.n_words, dataset.ixtoword)
-
 
 def main_sampler(sentences):
     return gen_example(dataset.wordtoix, algo, sentences)  # generate images for customized captions
